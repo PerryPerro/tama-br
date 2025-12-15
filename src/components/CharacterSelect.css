@@ -22,6 +22,55 @@
   margin-bottom: 20px;
 }
 
+.saved-game-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.continue-btn {
+  width: 100%;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  background: linear-gradient(145deg, #6bcb77, #4cb84c);
+  border: none;
+  border-radius: 25px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(107, 203, 119, 0.4);
+  font-weight: bold;
+}
+
+.continue-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(107, 203, 119, 0.6);
+}
+
+.or-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.or-divider::before,
+.or-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #444, transparent);
+}
+
+.or-divider span {
+  padding: 0 15px;
+}
+
 .instruction {
   font-size: 1.1rem;
   color: #aaa;

@@ -1,6 +1,6 @@
 # 🇮🇹 Italian Brain Rot Tamagotchi
 
-A Tamagotchi-style virtual pet game featuring the viral Italian Brain Rot characters (Italiensk hjärnröta) - surrealistic AI-generated creatures with absurdist Italian names!
+A Tamagotchi-style virtual pet game featuring the viral Italian Brain Rot characters (Italiensk hjärnröta) - surrealistic AI-generated creatures with absurdist Italian names! Now with **clicker game mechanics**, **progression system**, and **upgrades**!
 
 ## 🎮 Features
 
@@ -10,6 +10,22 @@ A Tamagotchi-style virtual pet game featuring the viral Italian Brain Rot charac
 - **Interactive Actions**: Feed, Play, Sleep, and Clean your creature
 - **Animated Pets**: Different animations based on your pet's mood
 - **Mobile-Friendly**: Works great on both web browsers and mobile devices
+
+### 🆕 Clicker Game Features
+
+- **⭐ Experience Points (XP)**: Gain XP from every action you perform
+- **📈 Level System**: Level up with exponentially scaling XP requirements
+- **🪙 Currency System**: Earn coins on each level up
+- **🛒 Upgrade Shop**: Purchase powerful upgrades with your coins:
+  - 🍕 **Auto Feeder** - Automatically feeds your pet every minute
+  - 🎮 **Auto Player** - Automatically plays with your pet every minute
+  - 🛏️ **Comfy Bed** - Automatically restores energy every minute
+  - 🧼 **Auto Cleaner** - Automatically cleans your pet every minute
+  - 💪 **Click Power** - Increases stat gain from actions (rogue-like multiplier!)
+  - ⭐ **XP Boost** - Increases XP gained from actions
+  - 💰 **Coin Boost** - Increases coins earned on level up
+- **🦋 Evolution System**: Evolve your character at level 100!
+- **💾 Auto-Save**: Your progress is automatically saved to localStorage
 
 ## 🐊 Available Characters
 
@@ -57,6 +73,15 @@ npm run preview
    - 🧼 **Hygiene**: Clean your pet to maintain hygiene
 3. **Don't Let Stats Hit Zero**: If any stat reaches 0, your pet will... depart 💀
 4. **Enjoy the Absurdity**: Watch your creature bounce, spin, and express its unique catchphrase!
+
+### 🎮 Clicker/Idle Progression
+
+1. **Click Actions**: Every action (Feed, Play, Sleep, Clean) gives XP and increases stats
+2. **Level Up**: Gain enough XP to level up and earn coins
+3. **Buy Upgrades**: Use coins in the Shop to purchase upgrades
+4. **Automate**: Auto upgrades will help maintain your pet even when you're away
+5. **Power Up**: Click Power and XP Boost upgrades increase your progression speed
+6. **Evolve**: Reach level 100 to evolve your creature into its ultimate form!
 
 ## 🛠️ Tech Stack
 
