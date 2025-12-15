@@ -1,0 +1,178 @@
+.adventure-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.adventure-container {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.adventure-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.adventure-title {
+  font-size: 1.5rem;
+  color: #fff;
+  margin: 0;
+}
+
+.adventure-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.adventure-close:hover {
+  color: #fff;
+}
+
+.areas-grid {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.area-group {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.area-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid;
+}
+
+.group-icon {
+  font-size: 1.3rem;
+}
+
+.group-name {
+  font-weight: bold;
+  color: #fff;
+  flex: 1;
+}
+
+.group-weakness {
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.area-list {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.area-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.area-card:hover:not(.locked) {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(5px);
+}
+
+.area-card.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.area-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  text-align: center;
+}
+
+.area-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.area-name {
+  color: #fff;
+  font-weight: bold;
+}
+
+.area-progress {
+  color: #6bcb77;
+  font-size: 0.8rem;
+}
+
+.unlock-req {
+  color: #ff6b6b;
+  font-size: 0.75rem;
+}
+
+.area-difficulty {
+  font-size: 0.8rem;
+}
+
+.adventure-footer {
+  padding: 15px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.adventure-footer p {
+  margin: 5px 0;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.adventure-footer .tip {
+  color: #ffd93d;
+}
+
+@media (max-width: 450px) {
+  .adventure-container {
+    border-radius: 15px;
+  }
+
+  .area-group-header {
+    flex-wrap: wrap;
+  }
+
+  .group-weakness {
+    width: 100%;
+    margin-top: 5px;
+  }
+}

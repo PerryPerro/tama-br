@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import type { Pet, UpgradeId } from '../types/pet';
+import type { Pet, UpgradeId, Equipment, EquipmentSlot, Area, MinigameResult } from '../types/pet';
 import { PetDisplay } from './PetDisplay';
 import { StatsDisplay } from './StatsDisplay';
 import { ActionButtons } from './ActionButtons';
 import { ProgressDisplay } from './ProgressDisplay';
 import { Shop } from './Shop';
+import { Adventure } from './Adventure';
+import { Inventory } from './Inventory';
 import './GameScreen.css';
 
 interface GameScreenProps {
@@ -17,6 +19,9 @@ interface GameScreenProps {
   onClean: () => void;
   onReset: () => void;
   onPurchaseUpgrade: (upgradeId: UpgradeId) => void;
+  onEquipItem: (equipment: Equipment) => void;
+  onUnequipItem: (slot: EquipmentSlot) => void;
+  onMinigameComplete: (area: Area, result: MinigameResult) => void;
 }
 
 export const GameScreen = ({
@@ -29,8 +34,13 @@ export const GameScreen = ({
   onClean,
   onReset,
   onPurchaseUpgrade,
+  onEquipItem,
+  onUnequipItem,
+  onMinigameComplete,
 }: GameScreenProps) => {
   const [showShop, setShowShop] = useState(false);
+  const [showAdventure, setShowAdventure] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
 
   return (
     <div className="game-screen">
@@ -51,6 +61,12 @@ export const GameScreen = ({
       <div className="game-header">
         <h1 className="game-title">🇮🇹 Brain Rot Tamagotchi 🇮🇹</h1>
         <div className="header-buttons">
+          <button className="adventure-btn" onClick={() => setShowAdventure(true)}>
+            ⚔️ Adventure
+          </button>
+          <button className="inventory-btn" onClick={() => setShowInventory(true)}>
+            🎒 Inventory
+          </button>
           <button className="shop-btn" onClick={() => setShowShop(!showShop)}>
             🛒 Shop
           </button>
@@ -79,6 +95,23 @@ export const GameScreen = ({
               pet={pet} 
               onPurchase={onPurchaseUpgrade}
               onClose={() => setShowShop(false)}
+            />
+          )}
+
+          {showAdventure && (
+            <Adventure
+              pet={pet}
+              onMinigameComplete={onMinigameComplete}
+              onClose={() => setShowAdventure(false)}
+            />
+          )}
+
+          {showInventory && (
+            <Inventory
+              pet={pet}
+              onEquip={onEquipItem}
+              onUnequip={onUnequipItem}
+              onClose={() => setShowInventory(false)}
             />
           )}
         </>
