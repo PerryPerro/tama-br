@@ -15,7 +15,7 @@
   background: linear-gradient(145deg, #1a1a2e, #16213e);
   border-radius: 20px;
   padding: 20px;
-  max-width: 500px;
+  max-width: 600px;
   width: 95%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
@@ -152,6 +152,75 @@
 
 .game-player.attacking {
   transform: scale(1.1);
+}
+
+/* Charging state */
+.game-player.charging {
+  animation: charge-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes charge-pulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 217, 61, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 217, 61, 0.9);
+  }
+}
+
+/* Charge indicator */
+.charge-indicator {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.charge-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd93d, #ff6b6b);
+  border-radius: 4px;
+  transition: width 0.1s ease;
+}
+
+.charge-direction-arrow {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  color: #ffd93d;
+  text-shadow: 0 0 10px rgba(255, 217, 61, 0.8);
+  animation: arrow-bounce 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes arrow-bounce {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    transform: translateX(-50%) scale(1.2);
+  }
+}
+
+/* Charge level visual effects */
+.charge-level-1 .charge-bar { background: linear-gradient(90deg, #ffd93d, #ffb347); }
+.charge-level-2 .charge-bar { background: linear-gradient(90deg, #ffb347, #ff8c42); }
+.charge-level-3 .charge-bar { background: linear-gradient(90deg, #ff8c42, #ff6b6b); }
+.charge-level-4 .charge-bar { background: linear-gradient(90deg, #ff6b6b, #e84393); }
+.charge-level-5 .charge-bar { background: linear-gradient(90deg, #e84393, #b88beb); }
+.charge-level-6 .charge-bar { background: linear-gradient(90deg, #b88beb, #ff00ff); animation: max-charge 0.2s ease-in-out infinite alternate; }
+
+@keyframes max-charge {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.5); }
 }
 
 /* Player facing direction indicators */
@@ -474,9 +543,16 @@
   box-shadow: 0 6px 20px rgba(74, 144, 217, 0.6);
 }
 
+@media (max-width: 550px) {
+  .game-arena {
+    width: 400px !important;
+    height: 320px !important;
+  }
+}
+
 @media (max-width: 450px) {
   .game-arena {
     width: 320px !important;
-    height: 240px !important;
+    height: 256px !important;
   }
 }

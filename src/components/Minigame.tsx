@@ -29,15 +29,16 @@ interface Player {
   facing: Direction;
 }
 
-const GAME_WIDTH = 400;
-const GAME_HEIGHT = 300;
+const GAME_WIDTH = 500;
+const GAME_HEIGHT = 400;
 const PLAYER_SIZE = 30;
 const MONSTER_SIZE = 25;
-const MOVE_SPEED = 8;
+const MOVE_SPEED = 2;
 const GAME_DURATION = 30; // 30 seconds
 const TOTAL_WAVES = 5;
 const ATTACK_RANGE = 60;
 const ATTACK_ARC = 90; // degrees
+const CHARGE_INTERVAL = 500; // 0.5 second intervals for charge levels (max 6 levels = 3 seconds)
 
 export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'finished'>('ready');
@@ -49,11 +50,17 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
   const [attacking, setAttacking] = useState(false);
   const [attackDirection, setAttackDirection] = useState<Direction>('up');
   const [result, setResult] = useState<MinigameResult | null>(null);
+  const [isCharging, setIsCharging] = useState(false);
+  const [chargeLevel, setChargeLevel] = useState(0);
+  const [chargeDirection, setChargeDirection] = useState<Direction>('up');
   
   const keysPressed = useRef<Set<string>>(new Set());
   const gameLoopRef = useRef<number | null>(null);
   const lastAttackTime = useRef<number>(0);
   const playerRef = useRef<Player>({ x: GAME_WIDTH / 2, y: GAME_HEIGHT - 50, facing: 'up' });
+  const chargeStartTime = useRef<number | null>(null);
+  const chargeIntervalRef = useRef<number | null>(null);
+  const chargeDirectionRef = useRef<Direction>('up');
 
   // Calculate player's attack power based on attributes and equipment
   const getPlayerPower = useCallback(() => {
@@ -108,25 +115,33 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
   }, [area.difficulty]);
 
   // Handle attack - directional attack in front of the player
-  const attack = useCallback(() => {
+  // Now accepts optional charge parameters for charged attacks
+  const attack = useCallback((chargedLevel = 0, forcedDirection?: Direction) => {
     const now = Date.now();
     if (now - lastAttackTime.current < 300) return; // Attack cooldown
     lastAttackTime.current = now;
     
     const currentPlayer = playerRef.current;
-    setAttackDirection(currentPlayer.facing);
+    // Use forced direction for charged attacks, otherwise use current facing
+    const direction = forcedDirection ?? currentPlayer.facing;
+    setAttackDirection(direction);
     setAttacking(true);
     setTimeout(() => setAttacking(false), 200);
     
-    const power = getPlayerPower();
+    // Calculate power and range based on charge level (0-6)
+    // Each charge level adds 50% damage and 20 range
+    const basePower = getPlayerPower();
+    const chargeMultiplier = 1 + (chargedLevel * 0.5);
+    const power = Math.floor(basePower * chargeMultiplier);
+    const range = ATTACK_RANGE + (chargedLevel * 20);
     
-    // Calculate attack area based on player facing direction
+    // Calculate attack area based on attack direction
     const playerCenterX = currentPlayer.x + PLAYER_SIZE / 2;
     const playerCenterY = currentPlayer.y + PLAYER_SIZE / 2;
     
     // Get the direction vector for attack
     let dirX = 0, dirY = 0;
-    switch (currentPlayer.facing) {
+    switch (direction) {
       case 'up': dirY = -1; break;
       case 'down': dirY = 1; break;
       case 'left': dirX = -1; break;
@@ -143,8 +158,8 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
         const dy = monsterCenterY - playerCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Check if monster is within attack range
-        if (distance > ATTACK_RANGE) return monster;
+        // Check if monster is within attack range (includes charge bonus)
+        if (distance > range) return monster;
         
         // Check if monster is in front of the player (within attack arc)
         // Calculate angle between attack direction and monster direction
@@ -170,20 +185,65 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     });
   }, [getPlayerPower, wave]);
 
+  // Start charging an attack
+  const startCharging = useCallback(() => {
+    const currentPlayer = playerRef.current;
+    chargeStartTime.current = Date.now();
+    chargeDirectionRef.current = currentPlayer.facing;
+    setIsCharging(true);
+    setChargeLevel(0);
+    setChargeDirection(currentPlayer.facing);
+    
+    // Update charge level every 100ms
+    chargeIntervalRef.current = window.setInterval(() => {
+      if (chargeStartTime.current) {
+        const elapsed = Date.now() - chargeStartTime.current;
+        const newLevel = Math.min(Math.floor(elapsed / CHARGE_INTERVAL), 6); // Max 6 levels (3 seconds)
+        setChargeLevel(newLevel);
+      }
+    }, 100);
+  }, []);
+
+  // Release charged attack
+  const releaseCharge = useCallback(() => {
+    if (chargeIntervalRef.current) {
+      clearInterval(chargeIntervalRef.current);
+      chargeIntervalRef.current = null;
+    }
+    
+    if (chargeStartTime.current) {
+      const elapsed = Date.now() - chargeStartTime.current;
+      const finalLevel = Math.min(Math.floor(elapsed / CHARGE_INTERVAL), 6);
+      // Use the locked direction from the ref
+      const lockedDirection = chargeDirectionRef.current;
+      attack(finalLevel, lockedDirection);
+    }
+    
+    chargeStartTime.current = null;
+    setIsCharging(false);
+    setChargeLevel(0);
+  }, [attack]);
+
   // Game loop
   useEffect(() => {
     if (gameState !== 'playing') return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       keysPressed.current.add(e.key.toLowerCase());
-      if (e.key === ' ' || e.key === 'Space') {
+      if ((e.key === ' ' || e.key === 'Space') && !chargeStartTime.current) {
         e.preventDefault();
-        attack();
+        startCharging();
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       keysPressed.current.delete(e.key.toLowerCase());
+      if (e.key === ' ' || e.key === 'Space') {
+        e.preventDefault();
+        if (chargeStartTime.current) {
+          releaseCharge();
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -237,7 +297,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
         const dx = currentPlayerPos.x - monster.x;
         const dy = currentPlayerPos.y - monster.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const speed = 1.5 + area.difficulty * 0.3;
+        const speed = 0.4 + area.difficulty * 0.1; // Reduced from 1.5 + 0.3
         
         // Check if monster is close enough to attack
         const attackDistance = PLAYER_SIZE + MONSTER_SIZE;
@@ -270,8 +330,11 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
+      if (chargeIntervalRef.current) {
+        clearInterval(chargeIntervalRef.current);
+      }
     };
-  }, [gameState, attack, area.difficulty]);
+  }, [gameState, startCharging, releaseCharge, area.difficulty]);
 
   // Timer
   useEffect(() => {
@@ -376,7 +439,8 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
             </p>
             <div className="controls-info">
               <p>⬆️⬇️⬅️➡️ or WASD to move</p>
-              <p>SPACE to attack</p>
+              <p>Hold SPACE to charge attack (up to 3s)</p>
+              <p>Release SPACE to unleash charged attack</p>
               <p>Survive 30 seconds and defeat all waves!</p>
             </div>
             <div className="ready-buttons">
@@ -403,7 +467,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
               style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
             >
               <div 
-                className={`game-player ${attacking ? 'attacking' : ''} facing-${player.facing}`}
+                className={`game-player ${attacking ? 'attacking' : ''} ${isCharging ? 'charging' : ''} facing-${player.facing}`}
                 style={{ 
                   left: player.x, 
                   top: player.y,
@@ -415,6 +479,14 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
                 {attacking && (
                   <div className={`attack-slash attack-${attackDirection}`}>
                     ⚔️
+                  </div>
+                )}
+                {isCharging && (
+                  <div className={`charge-indicator charge-level-${chargeLevel} charge-${chargeDirection}`}>
+                    <div className="charge-bar" style={{ width: `${(chargeLevel / 6) * 100}%` }} />
+                    <span className="charge-direction-arrow">
+                      {chargeDirection === 'up' ? '↑' : chargeDirection === 'down' ? '↓' : chargeDirection === 'left' ? '←' : '→'}
+                    </span>
                   </div>
                 )}
               </div>
