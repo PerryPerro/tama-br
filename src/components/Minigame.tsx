@@ -194,14 +194,14 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     setChargeLevel(0);
     setChargeDirection(currentPlayer.facing);
     
-    // Update charge level every 100ms
+    // Update charge level every 250ms for smooth visual feedback
     chargeIntervalRef.current = window.setInterval(() => {
       if (chargeStartTime.current) {
         const elapsed = Date.now() - chargeStartTime.current;
         const newLevel = Math.min(Math.floor(elapsed / CHARGE_INTERVAL), 6); // Max 6 levels (3 seconds)
         setChargeLevel(newLevel);
       }
-    }, 100);
+    }, 250);
   }, []);
 
   // Release charged attack
