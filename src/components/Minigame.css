@@ -151,9 +151,144 @@
 }
 
 .game-player.attacking {
-  transform: scale(1.2);
+  transform: scale(1.1);
 }
 
+/* Player facing direction indicators */
+.game-player.facing-up::after,
+.game-player.facing-down::after,
+.game-player.facing-left::after,
+.game-player.facing-right::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+.game-player.facing-up::after {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.game-player.facing-down::after {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.game-player.facing-left::after {
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.game-player.facing-right::after {
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Directional attack slash animation */
+.attack-slash {
+  position: absolute;
+  font-size: 1.5rem;
+  z-index: 11;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
+}
+
+.attack-slash.attack-up {
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%) rotate(0deg);
+  animation: slash-up 0.2s ease-out forwards;
+}
+
+.attack-slash.attack-down {
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+  animation: slash-down 0.2s ease-out forwards;
+}
+
+.attack-slash.attack-left {
+  left: -40px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-90deg);
+  animation: slash-left 0.2s ease-out forwards;
+}
+
+.attack-slash.attack-right {
+  right: -40px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  animation: slash-right 0.2s ease-out forwards;
+}
+
+@keyframes slash-up {
+  0% {
+    transform: translateX(-50%) translateY(20px) rotate(-45deg) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-50%) translateY(0) rotate(0deg) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(-10px) rotate(45deg) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes slash-down {
+  0% {
+    transform: translateX(-50%) translateY(-20px) rotate(225deg) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-50%) translateY(0) rotate(180deg) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) translateY(10px) rotate(135deg) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes slash-left {
+  0% {
+    transform: translateY(-50%) translateX(20px) rotate(-135deg) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-50%) translateX(0) rotate(-90deg) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50%) translateX(-10px) rotate(-45deg) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes slash-right {
+  0% {
+    transform: translateY(-50%) translateX(-20px) rotate(45deg) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(-50%) translateX(0) rotate(90deg) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50%) translateX(10px) rotate(135deg) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Old attack circle - kept for reference but not used */
 .attack-circle {
   position: absolute;
   width: 100px;
@@ -184,6 +319,56 @@
   background: rgba(255, 107, 107, 0.3);
   border-radius: 50%;
   transition: all 0.1s ease;
+  animation: monster-float 0.5s ease-in-out infinite alternate;
+}
+
+.game-monster.monster-attacking {
+  animation: monster-attack 0.3s ease-in-out infinite;
+  background: rgba(255, 50, 50, 0.6);
+  box-shadow: 0 0 15px rgba(255, 50, 50, 0.8);
+}
+
+@keyframes monster-float {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(-3px) scale(1.05);
+  }
+}
+
+@keyframes monster-attack {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.monster-attack-indicator {
+  position: absolute;
+  font-size: 0.8rem;
+  animation: attack-pulse 0.3s ease-in-out infinite;
+  top: -15px;
+}
+
+@keyframes attack-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
 }
 
 .monster-health {
