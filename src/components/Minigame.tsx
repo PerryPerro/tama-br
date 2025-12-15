@@ -133,9 +133,9 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     setTimeout(() => setAttacking(false), 200);
     
     // Calculate power and range based on charge level (0-3)
-    // Charge level 0 = 1x, level 1 = 1x, level 2 = 2x, level 3 = 3x
+    // Charge level 0-1 = 1x (normal), level 2 = 2x, level 3 = 3x
     const basePower = getPlayerPower();
-    const chargeMultiplier = Math.max(1, chargedLevel);
+    const chargeMultiplier = chargedLevel <= 1 ? 1 : chargedLevel;
     const power = Math.floor(basePower * chargeMultiplier);
     const range = ATTACK_RANGE * chargeMultiplier;
     
