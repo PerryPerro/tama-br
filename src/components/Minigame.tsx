@@ -10,17 +10,23 @@ interface MinigameProps {
   onClose: () => void;
 }
 
+type Direction = 'up' | 'down' | 'left' | 'right';
+type SpawnSide = 'top' | 'left' | 'right';
+
 interface Monster {
   id: number;
   x: number;
   y: number;
   health: number;
   maxHealth: number;
+  isAttacking: boolean;
+  spawnSide: SpawnSide;
 }
 
 interface Player {
   x: number;
   y: number;
+  facing: Direction;
 }
 
 const GAME_WIDTH = 400;
@@ -30,20 +36,24 @@ const MONSTER_SIZE = 25;
 const MOVE_SPEED = 8;
 const GAME_DURATION = 30; // 30 seconds
 const TOTAL_WAVES = 5;
+const ATTACK_RANGE = 60;
+const ATTACK_ARC = 90; // degrees
 
 export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'finished'>('ready');
-  const [player, setPlayer] = useState<Player>({ x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 });
+  const [player, setPlayer] = useState<Player>({ x: GAME_WIDTH / 2, y: GAME_HEIGHT - 50, facing: 'up' });
   const [monsters, setMonsters] = useState<Monster[]>([]);
   const [wave, setWave] = useState(1);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [score, setScore] = useState(0);
   const [attacking, setAttacking] = useState(false);
+  const [attackDirection, setAttackDirection] = useState<Direction>('up');
   const [result, setResult] = useState<MinigameResult | null>(null);
   
   const keysPressed = useRef<Set<string>>(new Set());
   const gameLoopRef = useRef<number | null>(null);
   const lastAttackTime = useRef<number>(0);
+  const playerRef = useRef<Player>({ x: GAME_WIDTH / 2, y: GAME_HEIGHT - 50, facing: 'up' });
 
   // Calculate player's attack power based on attributes and equipment
   const getPlayerPower = useCallback(() => {
@@ -55,46 +65,98 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     return basePower + attackBonus;
   }, [pet, area]);
 
-  // Spawn monsters for the current wave
+  // Spawn monsters for the current wave from top and sides
   const spawnMonsters = useCallback((waveNum: number) => {
     const count = 3 + waveNum + Math.floor(area.difficulty / 2);
     const newMonsters: Monster[] = [];
     
+    const sides: SpawnSide[] = ['top', 'left', 'right'];
+    
     for (let i = 0; i < count; i++) {
       const baseHealth = 20 + waveNum * 10 + area.difficulty * 5;
+      const side = sides[i % sides.length];
+      
+      let x: number, y: number;
+      
+      switch (side) {
+        case 'top':
+          x = Math.random() * (GAME_WIDTH - MONSTER_SIZE);
+          y = -MONSTER_SIZE;
+          break;
+        case 'left':
+          x = -MONSTER_SIZE;
+          y = Math.random() * (GAME_HEIGHT / 2);
+          break;
+        case 'right':
+          x = GAME_WIDTH;
+          y = Math.random() * (GAME_HEIGHT / 2);
+          break;
+      }
+      
       newMonsters.push({
         id: Date.now() + i,
-        x: Math.random() * (GAME_WIDTH - MONSTER_SIZE),
-        y: Math.random() * (GAME_HEIGHT - MONSTER_SIZE),
+        x,
+        y,
         health: baseHealth,
         maxHealth: baseHealth,
+        isAttacking: false,
+        spawnSide: side,
       });
     }
     
     setMonsters(newMonsters);
   }, [area.difficulty]);
 
-  // Handle attack
+  // Handle attack - directional attack in front of the player
   const attack = useCallback(() => {
     const now = Date.now();
-    if (now - lastAttackTime.current < 200) return; // Attack cooldown
+    if (now - lastAttackTime.current < 300) return; // Attack cooldown
     lastAttackTime.current = now;
     
+    const currentPlayer = playerRef.current;
+    setAttackDirection(currentPlayer.facing);
     setAttacking(true);
-    setTimeout(() => setAttacking(false), 150);
+    setTimeout(() => setAttacking(false), 200);
     
     const power = getPlayerPower();
-    const attackRadius = 50;
+    
+    // Calculate attack area based on player facing direction
+    const playerCenterX = currentPlayer.x + PLAYER_SIZE / 2;
+    const playerCenterY = currentPlayer.y + PLAYER_SIZE / 2;
+    
+    // Get the direction vector for attack
+    let dirX = 0, dirY = 0;
+    switch (currentPlayer.facing) {
+      case 'up': dirY = -1; break;
+      case 'down': dirY = 1; break;
+      case 'left': dirX = -1; break;
+      case 'right': dirX = 1; break;
+    }
     
     setMonsters(prev => {
       const updated = prev.map(monster => {
-        const dx = (monster.x + MONSTER_SIZE / 2) - (player.x + PLAYER_SIZE / 2);
-        const dy = (monster.y + MONSTER_SIZE / 2) - (player.y + PLAYER_SIZE / 2);
+        const monsterCenterX = monster.x + MONSTER_SIZE / 2;
+        const monsterCenterY = monster.y + MONSTER_SIZE / 2;
+        
+        // Vector from player to monster
+        const dx = monsterCenterX - playerCenterX;
+        const dy = monsterCenterY - playerCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
         
-        if (distance <= attackRadius) {
+        // Check if monster is within attack range
+        if (distance > ATTACK_RANGE) return monster;
+        
+        // Check if monster is in front of the player (within attack arc)
+        // Calculate angle between attack direction and monster direction
+        const dotProduct = dx * dirX + dy * dirY;
+        const cosAngle = dotProduct / distance;
+        const angleThreshold = Math.cos((ATTACK_ARC / 2) * Math.PI / 180);
+        
+        // Monster is in the attack arc if the direction is correct
+        if (cosAngle >= angleThreshold) {
           return { ...monster, health: monster.health - power };
         }
+        
         return monster;
       });
       
@@ -106,7 +168,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
       
       return updated.filter(m => m.health > 0);
     });
-  }, [player, getPlayerPower, wave]);
+  }, [getPlayerPower, wave]);
 
   // Game loop
   useEffect(() => {
@@ -130,35 +192,56 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     // Movement loop
     const moveLoop = () => {
       setPlayer(prev => {
-        let { x, y } = prev;
+        let { x, y, facing } = prev;
         
+        // Track last direction pressed to update facing
         if (keysPressed.current.has('arrowleft') || keysPressed.current.has('a')) {
           x = Math.max(0, x - MOVE_SPEED);
+          facing = 'left';
         }
         if (keysPressed.current.has('arrowright') || keysPressed.current.has('d')) {
           x = Math.min(GAME_WIDTH - PLAYER_SIZE, x + MOVE_SPEED);
+          facing = 'right';
         }
         if (keysPressed.current.has('arrowup') || keysPressed.current.has('w')) {
           y = Math.max(0, y - MOVE_SPEED);
+          facing = 'up';
         }
         if (keysPressed.current.has('arrowdown') || keysPressed.current.has('s')) {
           y = Math.min(GAME_HEIGHT - PLAYER_SIZE, y + MOVE_SPEED);
+          facing = 'down';
         }
         
-        return { x, y };
+        const newPlayer = { x, y, facing };
+        playerRef.current = newPlayer;
+        return newPlayer;
       });
 
-      // Move monsters towards player
+      // Move monsters towards player and handle attack state
       setMonsters(prev => prev.map(monster => {
-        const dx = player.x - monster.x;
-        const dy = player.y - monster.y;
+        const currentPlayerPos = playerRef.current;
+        const dx = currentPlayerPos.x - monster.x;
+        const dy = currentPlayerPos.y - monster.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const speed = 1 + area.difficulty * 0.2;
+        const speed = 1.5 + area.difficulty * 0.3;
+        
+        // Check if monster is close enough to attack
+        const attackDistance = PLAYER_SIZE + MONSTER_SIZE;
+        const isAttacking = dist < attackDistance;
+        
+        // Move towards player if not too close
+        let newX = monster.x;
+        let newY = monster.y;
+        if (dist > MONSTER_SIZE) {
+          newX = monster.x + (dx / dist) * speed;
+          newY = monster.y + (dy / dist) * speed;
+        }
         
         return {
           ...monster,
-          x: monster.x + (dx / dist) * speed,
-          y: monster.y + (dy / dist) * speed,
+          x: newX,
+          y: newY,
+          isAttacking,
         };
       }));
 
@@ -174,7 +257,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [gameState, attack, player, area.difficulty]);
+  }, [gameState, attack, area.difficulty]);
 
   // Timer
   useEffect(() => {
@@ -214,7 +297,9 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     setTimeLeft(GAME_DURATION);
     setWave(1);
     setScore(0);
-    setPlayer({ x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 });
+    const initialPlayer = { x: GAME_WIDTH / 2, y: GAME_HEIGHT - 50, facing: 'up' as Direction };
+    setPlayer(initialPlayer);
+    playerRef.current = initialPlayer;
     spawnMonsters(1);
   };
 
@@ -304,7 +389,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
               style={{ width: GAME_WIDTH, height: GAME_HEIGHT }}
             >
               <div 
-                className={`game-player ${attacking ? 'attacking' : ''}`}
+                className={`game-player ${attacking ? 'attacking' : ''} facing-${player.facing}`}
                 style={{ 
                   left: player.x, 
                   top: player.y,
@@ -313,13 +398,17 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
                 }}
               >
                 {pet.character.emoji}
-                {attacking && <div className="attack-circle" />}
+                {attacking && (
+                  <div className={`attack-slash attack-${attackDirection}`}>
+                    ⚔️
+                  </div>
+                )}
               </div>
               
               {monsters.map(monster => (
                 <div 
                   key={monster.id}
-                  className="game-monster"
+                  className={`game-monster ${monster.isAttacking ? 'monster-attacking' : ''}`}
                   style={{ 
                     left: monster.x, 
                     top: monster.y,
@@ -334,6 +423,9 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
                       style={{ width: `${(monster.health / monster.maxHealth) * 100}%` }}
                     />
                   </div>
+                  {monster.isAttacking && (
+                    <div className="monster-attack-indicator">💥</div>
+                  )}
                 </div>
               ))}
             </div>
