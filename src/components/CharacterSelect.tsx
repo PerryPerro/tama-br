@@ -4,13 +4,27 @@ import './CharacterSelect.css';
 
 interface CharacterSelectProps {
   onSelect: (character: BrainRotCharacter) => void;
+  hasSavedGame?: boolean;
+  onContinue?: () => void;
 }
 
-export const CharacterSelect = ({ onSelect }: CharacterSelectProps) => {
+export const CharacterSelect = ({ onSelect, hasSavedGame, onContinue }: CharacterSelectProps) => {
   return (
     <div className="character-select">
       <h1 className="title">🇮🇹 Italian Brain Rot 🇮🇹</h1>
       <h2 className="subtitle">Tamagotchi</h2>
+      
+      {hasSavedGame && onContinue && (
+        <div className="saved-game-section">
+          <button className="continue-btn" onClick={onContinue}>
+            ▶️ Continue Saved Game
+          </button>
+          <div className="or-divider">
+            <span>or start new</span>
+          </div>
+        </div>
+      )}
+      
       <p className="instruction">Choose your creature!</p>
       
       <div className="character-grid">
