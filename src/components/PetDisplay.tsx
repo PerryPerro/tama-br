@@ -1,4 +1,5 @@
 import type { Pet, PetMood } from '../types/pet';
+import { getEvolutionTitle } from '../types/pet';
 import './PetDisplay.css';
 
 interface PetDisplayProps {
@@ -34,31 +35,33 @@ const getMoodIndicator = (mood: PetMood): string => {
 export const PetDisplay = ({ pet }: PetDisplayProps) => {
   const animation = getMoodAnimation(pet.mood);
   const moodIndicator = getMoodIndicator(pet.mood);
+  const isEvolved = pet.evolutionCount > 0;
+  const evolutionTitle = getEvolutionTitle(pet.evolutionCount);
   
   // Use evolved emoji/image if evolved
-  const displayEmoji = pet.isEvolved ? pet.character.evolvedEmoji : pet.character.emoji;
-  const displayCatchphrase = pet.isEvolved ? pet.character.evolvedCatchphrase : pet.character.catchphrase;
+  const displayEmoji = isEvolved ? pet.character.evolvedEmoji : pet.character.emoji;
+  const displayCatchphrase = isEvolved ? pet.character.evolvedCatchphrase : pet.character.catchphrase;
 
   return (
     <div className="pet-display">
       <div className="pet-name-container">
         <span className="pet-italian-name" style={{ color: pet.character.color }}>
-          {pet.isEvolved && <span className="evolved-prefix">✨ </span>}
+          {isEvolved && <span className="evolved-prefix">✨ {evolutionTitle} </span>}
           {pet.character.italianName}
-          {pet.isEvolved && <span className="evolved-suffix"> ✨</span>}
+          {isEvolved && <span className="evolved-suffix"> ✨</span>}
         </span>
         <span className="pet-age">Age: {Math.floor(pet.age)} min</span>
       </div>
       
       <div 
-        className={`pet-container ${animation} ${pet.isEvolved ? 'evolved' : ''}`}
+        className={`pet-container ${animation} ${isEvolved ? 'evolved' : ''}`}
         style={{ '--pet-color': pet.character.color } as React.CSSProperties}
       >
         <div className="pet-emoji">
           {pet.isAlive ? displayEmoji : '💀'}
         </div>
         <div className="mood-indicator">{moodIndicator}</div>
-        {pet.isEvolved && <div className="evolution-glow" />}
+        {isEvolved && <div className="evolution-glow" />}
       </div>
 
       {pet.isAlive && (

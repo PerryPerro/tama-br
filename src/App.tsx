@@ -18,6 +18,9 @@ function App() {
     purchaseUpgrade,
     hasSavedGame,
     continueSavedGame,
+    equipItem,
+    unequipItem,
+    processMinigameResult,
   } = useGameState();
 
   return (
@@ -39,6 +42,9 @@ function App() {
           onClean={cleanPet}
           onReset={resetGame}
           onPurchaseUpgrade={purchaseUpgrade}
+          onEquipItem={equipItem}
+          onUnequipItem={unequipItem}
+          onMinigameComplete={processMinigameResult}
         />
       ) : null}
     </div>
