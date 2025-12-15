@@ -212,11 +212,8 @@
 
 /* Charge level visual effects */
 .charge-level-1 .charge-bar { background: linear-gradient(90deg, #ffd93d, #ffb347); }
-.charge-level-2 .charge-bar { background: linear-gradient(90deg, #ffb347, #ff8c42); }
-.charge-level-3 .charge-bar { background: linear-gradient(90deg, #ff8c42, #ff6b6b); }
-.charge-level-4 .charge-bar { background: linear-gradient(90deg, #ff6b6b, #e84393); }
-.charge-level-5 .charge-bar { background: linear-gradient(90deg, #e84393, #b88beb); }
-.charge-level-6 .charge-bar { background: linear-gradient(90deg, #b88beb, #ff00ff); animation: max-charge 0.2s ease-in-out infinite alternate; }
+.charge-level-2 .charge-bar { background: linear-gradient(90deg, #ffb347, #ff6b6b); }
+.charge-level-3 .charge-bar { background: linear-gradient(90deg, #ff6b6b, #b88beb); animation: max-charge 0.2s ease-in-out infinite alternate; }
 
 @keyframes max-charge {
   0% { filter: brightness(1); }

@@ -38,7 +38,9 @@ const GAME_DURATION = 30; // 30 seconds
 const TOTAL_WAVES = 5;
 const ATTACK_RANGE = 60;
 const ATTACK_ARC = 90; // degrees
-const CHARGE_INTERVAL = 500; // 0.5 second intervals for charge levels (max 6 levels = 3 seconds)
+const CHARGE_THRESHOLD = 500; // 0.5 seconds to start charging
+const CHARGE_LEVEL_INTERVAL = 500; // 0.5 seconds per charge level
+const MAX_CHARGE_LEVEL = 3; // Maximum 3x multiplier
 
 export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
   const [gameState, setGameState] = useState<'ready' | 'playing' | 'finished'>('ready');
@@ -58,6 +60,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
   const gameLoopRef = useRef<number | null>(null);
   const lastAttackTime = useRef<number>(0);
   const playerRef = useRef<Player>({ x: GAME_WIDTH / 2, y: GAME_HEIGHT - 50, facing: 'up' });
+  const monstersRef = useRef<Monster[]>([]);
   const chargeStartTime = useRef<number | null>(null);
   const chargeIntervalRef = useRef<number | null>(null);
   const chargeDirectionRef = useRef<Direction>('up');
@@ -111,6 +114,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
       });
     }
     
+    monstersRef.current = newMonsters;
     setMonsters(newMonsters);
   }, [area.difficulty]);
 
@@ -128,12 +132,12 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     setAttacking(true);
     setTimeout(() => setAttacking(false), 200);
     
-    // Calculate power and range based on charge level (0-6)
-    // Each charge level adds 50% damage and 20 range
+    // Calculate power and range based on charge level (0-3)
+    // Charge level 0 = 1x, level 1 = 1x, level 2 = 2x, level 3 = 3x
     const basePower = getPlayerPower();
-    const chargeMultiplier = 1 + (chargedLevel * 0.5);
+    const chargeMultiplier = Math.max(1, chargedLevel);
     const power = Math.floor(basePower * chargeMultiplier);
-    const range = ATTACK_RANGE + (chargedLevel * 20);
+    const range = ATTACK_RANGE * chargeMultiplier;
     
     // Calculate attack area based on attack direction
     const playerCenterX = currentPlayer.x + PLAYER_SIZE / 2;
@@ -148,63 +152,68 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
       case 'right': dirX = 1; break;
     }
     
-    setMonsters(prev => {
-      const updated = prev.map(monster => {
-        const monsterCenterX = monster.x + MONSTER_SIZE / 2;
-        const monsterCenterY = monster.y + MONSTER_SIZE / 2;
-        
-        // Vector from player to monster
-        const dx = monsterCenterX - playerCenterX;
-        const dy = monsterCenterY - playerCenterY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // Check if monster is within attack range (includes charge bonus)
-        if (distance > range) return monster;
-        
-        // Check if monster is in front of the player (within attack arc)
-        // Calculate angle between attack direction and monster direction
-        const dotProduct = dx * dirX + dy * dirY;
-        const cosAngle = dotProduct / distance;
-        const angleThreshold = Math.cos((ATTACK_ARC / 2) * Math.PI / 180);
-        
-        // Monster is in the attack arc if the direction is correct
-        if (cosAngle >= angleThreshold) {
-          return { ...monster, health: monster.health - power };
-        }
-        
-        return monster;
-      });
+    const updated = monstersRef.current.map(monster => {
+      const monsterCenterX = monster.x + MONSTER_SIZE / 2;
+      const monsterCenterY = monster.y + MONSTER_SIZE / 2;
       
-      // Count killed monsters
-      const killed = updated.filter(m => m.health <= 0).length;
-      if (killed > 0) {
-        setScore(s => s + killed * 10 * wave);
+      // Vector from player to monster
+      const dx = monsterCenterX - playerCenterX;
+      const dy = monsterCenterY - playerCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Check if monster is within attack range (includes charge bonus)
+      if (distance > range) return monster;
+      
+      // Check if monster is in front of the player (within attack arc)
+      // Calculate angle between attack direction and monster direction
+      const dotProduct = dx * dirX + dy * dirY;
+      const cosAngle = dotProduct / distance;
+      const angleThreshold = Math.cos((ATTACK_ARC / 2) * Math.PI / 180);
+      
+      // Monster is in the attack arc if the direction is correct
+      if (cosAngle >= angleThreshold) {
+        return { ...monster, health: monster.health - power };
       }
       
-      return updated.filter(m => m.health > 0);
+      return monster;
     });
+    
+    // Count killed monsters
+    const killed = updated.filter(m => m.health <= 0).length;
+    if (killed > 0) {
+      setScore(s => s + killed * 10 * wave);
+    }
+    
+    const alive = updated.filter(m => m.health > 0);
+    monstersRef.current = alive;
+    setMonsters(alive);
   }, [getPlayerPower, wave]);
 
-  // Start charging an attack
+  // Start tracking space key press
   const startCharging = useCallback(() => {
     const currentPlayer = playerRef.current;
     chargeStartTime.current = Date.now();
     chargeDirectionRef.current = currentPlayer.facing;
-    setIsCharging(true);
-    setChargeLevel(0);
     setChargeDirection(currentPlayer.facing);
     
-    // Update charge level every 250ms for smooth visual feedback
+    // Update charge level every 100ms for smooth visual feedback
     chargeIntervalRef.current = window.setInterval(() => {
       if (chargeStartTime.current) {
         const elapsed = Date.now() - chargeStartTime.current;
-        const newLevel = Math.min(Math.floor(elapsed / CHARGE_INTERVAL), 6); // Max 6 levels (3 seconds)
-        setChargeLevel(newLevel);
+        
+        // Only start showing charge after CHARGE_THRESHOLD (0.5s)
+        if (elapsed >= CHARGE_THRESHOLD) {
+          setIsCharging(true);
+          // Calculate charge level: 0.5s = level 1, 1.0s = level 2, 1.5s = level 3
+          const chargeTime = elapsed - CHARGE_THRESHOLD;
+          const newLevel = Math.min(Math.floor(chargeTime / CHARGE_LEVEL_INTERVAL) + 1, MAX_CHARGE_LEVEL);
+          setChargeLevel(newLevel);
+        }
       }
-    }, 250);
+    }, 100);
   }, []);
 
-  // Release charged attack
+  // Release charged attack or perform normal attack
   const releaseCharge = useCallback(() => {
     if (chargeIntervalRef.current) {
       clearInterval(chargeIntervalRef.current);
@@ -213,10 +222,17 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     
     if (chargeStartTime.current) {
       const elapsed = Date.now() - chargeStartTime.current;
-      const finalLevel = Math.min(Math.floor(elapsed / CHARGE_INTERVAL), 6);
-      // Use the locked direction from the ref
       const lockedDirection = chargeDirectionRef.current;
-      attack(finalLevel, lockedDirection);
+      
+      // If held for less than 0.5s, perform normal attack (level 0)
+      if (elapsed < CHARGE_THRESHOLD) {
+        attack(0, lockedDirection);
+      } else {
+        // Calculate final charge level (1-3)
+        const chargeTime = elapsed - CHARGE_THRESHOLD;
+        const finalLevel = Math.min(Math.floor(chargeTime / CHARGE_LEVEL_INTERVAL) + 1, MAX_CHARGE_LEVEL);
+        attack(finalLevel, lockedDirection);
+      }
     }
     
     chargeStartTime.current = null;
@@ -292,12 +308,12 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
       });
 
       // Move monsters towards player and handle attack state
-      setMonsters(prev => prev.map(monster => {
-        const currentPlayerPos = playerRef.current;
+      const currentPlayerPos = playerRef.current;
+      const updatedMonsters = monstersRef.current.map(monster => {
         const dx = currentPlayerPos.x - monster.x;
         const dy = currentPlayerPos.y - monster.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const speed = 0.4 + area.difficulty * 0.1; // Reduced from 1.5 + 0.3
+        const speed = 1.0 + area.difficulty * 0.2;
         
         // Check if monster is close enough to attack
         const attackDistance = PLAYER_SIZE + MONSTER_SIZE;
@@ -317,7 +333,10 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
           y: newY,
           isAttacking,
         };
-      }));
+      });
+      
+      monstersRef.current = updatedMonsters;
+      setMonsters(updatedMonsters);
 
       gameLoopRef.current = requestAnimationFrame(moveLoop);
     };
@@ -439,8 +458,8 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
             </p>
             <div className="controls-info">
               <p>⬆️⬇️⬅️➡️ or WASD to move</p>
-              <p>Hold SPACE to charge attack (up to 3s)</p>
-              <p>Release SPACE to unleash charged attack</p>
+              <p>Tap SPACE for normal attack</p>
+              <p>Hold SPACE for 0.5s+ to charge (max 1.5s for 3x power)</p>
               <p>Survive 30 seconds and defeat all waves!</p>
             </div>
             <div className="ready-buttons">
@@ -483,7 +502,7 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
                 )}
                 {isCharging && (
                   <div className={`charge-indicator charge-level-${chargeLevel} charge-${chargeDirection}`}>
-                    <div className="charge-bar" style={{ width: `${(chargeLevel / 6) * 100}%` }} />
+                    <div className="charge-bar" style={{ width: `${(chargeLevel / MAX_CHARGE_LEVEL) * 100}%` }} />
                     <span className="charge-direction-arrow">
                       {chargeDirection === 'up' ? '↑' : chargeDirection === 'down' ? '↓' : chargeDirection === 'left' ? '←' : '→'}
                     </span>
