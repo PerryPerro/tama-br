@@ -193,23 +193,37 @@ export const Minigame = ({ pet, area, onComplete, onClose }: MinigameProps) => {
     const moveLoop = () => {
       setPlayer(prev => {
         let { x, y, facing } = prev;
+        let horizontalMove = false;
+        let verticalMove = false;
         
-        // Track last direction pressed to update facing
+        // Track movement and update position
         if (keysPressed.current.has('arrowleft') || keysPressed.current.has('a')) {
           x = Math.max(0, x - MOVE_SPEED);
+          horizontalMove = true;
           facing = 'left';
         }
         if (keysPressed.current.has('arrowright') || keysPressed.current.has('d')) {
           x = Math.min(GAME_WIDTH - PLAYER_SIZE, x + MOVE_SPEED);
+          horizontalMove = true;
           facing = 'right';
         }
+        // Vertical movement takes priority over horizontal for facing direction
+        // This makes sense since enemies come from top and sides
         if (keysPressed.current.has('arrowup') || keysPressed.current.has('w')) {
           y = Math.max(0, y - MOVE_SPEED);
+          verticalMove = true;
           facing = 'up';
         }
         if (keysPressed.current.has('arrowdown') || keysPressed.current.has('s')) {
           y = Math.min(GAME_HEIGHT - PLAYER_SIZE, y + MOVE_SPEED);
+          verticalMove = true;
           facing = 'down';
+        }
+        
+        // If only horizontal movement, keep that facing direction
+        // (already set above, vertical will override if both are pressed)
+        if (horizontalMove && !verticalMove) {
+          // facing is already set correctly from horizontal movement
         }
         
         const newPlayer = { x, y, facing };
