@@ -1,0 +1,99 @@
+.character-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 0;
+  background: linear-gradient(135deg, #009246, #fff, #ce2b37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.5rem;
+  color: #888;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+
+.instruction {
+  font-size: 1.1rem;
+  color: #aaa;
+  margin-bottom: 30px;
+}
+
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.character-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 15px;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid var(--character-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.character-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4),
+              0 0 20px color-mix(in srgb, var(--character-color) 30%, transparent);
+  border-color: var(--character-color);
+}
+
+.character-card:active {
+  transform: translateY(-2px);
+}
+
+.character-emoji {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.character-italian-name {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--character-color);
+  text-align: center;
+  margin-bottom: 5px;
+}
+
+.character-name {
+  font-size: 0.75rem;
+  color: #888;
+  text-align: center;
+}
+
+@media (max-width: 400px) {
+  .character-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  .character-card {
+    padding: 15px 10px;
+  }
+  
+  .character-emoji {
+    font-size: 2.5rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+}
