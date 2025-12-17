@@ -104,11 +104,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .game-hud {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
   padding: 10px 20px;
   margin-bottom: 10px;
@@ -129,12 +131,30 @@
   font-weight: bold;
 }
 
+.cancel-game-btn {
+  background: rgba(255, 0, 0, 0.2);
+  border: 2px solid #ff6b6b;
+  color: #ff6b6b;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.cancel-game-btn:hover {
+  background: rgba(255, 0, 0, 0.4);
+  transform: scale(1.1);
+}
+
 .game-arena {
   position: relative;
-  background: linear-gradient(145deg, #0a0a15, #151530);
   border: 3px solid #333;
   border-radius: 10px;
   overflow: hidden;
+  display: block;
+  image-rendering: pixelated;
+  cursor: crosshair;
 }
 
 .game-player {
@@ -188,6 +208,97 @@
   background: linear-gradient(90deg, #ffd93d, #ff6b6b);
   border-radius: 4px;
   transition: width 0.1s ease;
+}
+
+/* New charge UI (overlayed on canvas) */
+.charge-ui {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 100;
+}
+
+.charge-bar-container {
+  position: relative;
+  width: 180px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 7px;
+  overflow: visible;
+  margin-bottom: 8px;
+  border: 2px solid rgba(255, 217, 61, 0.6);
+}
+
+.charge-segments {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.charge-segment {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.5);
+  z-index: 2;
+}
+
+.charge-bar-fill {
+  position: relative;
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.05s linear, background 0.2s ease;
+  z-index: 1;
+}
+
+/* Level 1 - Yellow/Gold */
+.charge-bar-fill.charge-level-1 {
+  background: linear-gradient(90deg, #ffd93d, #ffed4e);
+  box-shadow: 0 0 15px rgba(255, 217, 61, 1), inset 0 0 10px rgba(255, 255, 255, 0.3);
+  animation: pulse-1 0.5s ease-in-out infinite;
+}
+
+/* Level 2 - Orange */
+.charge-bar-fill.charge-level-2 {
+  background: linear-gradient(90deg, #ff9f40, #ff6b35);
+  box-shadow: 0 0 20px rgba(255, 107, 53, 1), inset 0 0 10px rgba(255, 255, 255, 0.4);
+  animation: pulse-2 0.4s ease-in-out infinite;
+}
+
+/* Level 3 - Red */
+.charge-bar-fill.charge-level-3 {
+  background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+  box-shadow: 0 0 25px rgba(255, 107, 107, 1), inset 0 0 15px rgba(255, 255, 255, 0.5);
+  animation: pulse-3 0.3s ease-in-out infinite;
+}
+
+@keyframes pulse-1 {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.1); }
+}
+
+@keyframes pulse-2 {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.15); }
+}
+
+@keyframes pulse-3 {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.2); }
+}
+
+.charge-level-text {
+  color: #ffd93d;
+  font-weight: bold;
+  font-size: 1rem;
+  text-shadow: 0 0 10px rgba(255, 217, 61, 0.8), 0 2px 5px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
 }
 
 .charge-direction-arrow {
